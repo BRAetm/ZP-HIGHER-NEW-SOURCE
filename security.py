@@ -1,9 +1,18 @@
 """
-security.py — Process integrity checks.
-Reconstructed from ui.dll. Blocks: CE, x64dbg, IDA, Wireshark, Fiddler.
-Does NOT detect Frida or Ghidra (confirmed from bytecode scan).
+security.py — Process integrity checks and periodic auth.
+Reconstructed from exe diagnostic output (diag2.txt)
+SEC_CLASS PeriodicAuthChecker: start,stop
+SECURITY_ATTRS=PeriodicAuthChecker,ctypes,hashlib,os,run_security_checks,start_background_monitor,...
 """
 import ctypes
+import os
+import threading
+import time
+import hashlib
+import struct
+import subprocess
+import sys
+
 import psutil
 
 
@@ -37,3 +46,49 @@ class Security:
         except Exception:
             pass
         return False
+
+
+class PeriodicAuthChecker:
+    """Periodic KeyAuth validation (from diag2.txt: start,stop methods)."""
+
+    def __init__(self, interval: int = 300):
+        self.interval = interval  # seconds
+        self._running = False
+        self._thread = None
+
+    def start(self):
+        """Start periodic auth checking."""
+        if self._running:
+            return
+        self._running = True
+        self._thread = threading.Thread(target=self._check_loop, daemon=True)
+        self._thread.start()
+
+    def stop(self):
+        """Stop periodic auth checking."""
+        self._running = False
+        if self._thread:
+            self._thread.join(timeout=5)
+
+    def _check_loop(self):
+        """Background loop that validates auth periodically."""
+        while self._running:
+            try:
+                run_security_checks()
+            except Exception:
+                pass
+            time.sleep(self.interval)
+
+
+def run_security_checks():
+    """Run all security checks (from diag2.txt)."""
+    sec = Security()
+    if not sec.verify():
+        sys.exit(1)
+
+
+def start_background_monitor():
+    """Start background security monitor (from diag2.txt)."""
+    checker = PeriodicAuthChecker()
+    checker.start()
+    return checker
