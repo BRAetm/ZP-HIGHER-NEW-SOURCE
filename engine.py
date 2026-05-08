@@ -34,7 +34,7 @@ try:
 except ImportError:
     BC_OK = False
 
-from core.xinput import read_xinput
+from xinput import read_xinput
 
 try:
     import cupy as cp

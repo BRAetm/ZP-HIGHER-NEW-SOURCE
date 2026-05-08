@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QColor
 
-from keyauth import KeyAuthApp
+from keyauth import KeyAuth
 from security import PeriodicAuthChecker
 
 C_BG = "#1a1a2e"
